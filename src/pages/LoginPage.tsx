@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Loader2, ShieldAlert } from 'lucide-react';
@@ -15,9 +15,13 @@ export function LoginPage() {
   const [loading, setLoading] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const popupInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
+      if (popupInFlightRef.current) {
+        return;
+      }
       if (!user) {
         setLoading(false);
         return;
@@ -46,6 +50,7 @@ export function LoginPage() {
   const handleGoogleLogin = async () => {
     setErrorMsg(null);
     setSigningIn(true);
+    popupInFlightRef.current = true;
     try {
       const result = await signInWithGoogleAdmin();
       if (!isAuthorizedAdminUser(result.user)) {
@@ -73,6 +78,7 @@ export function LoginPage() {
         setErrorMsg('تعذر إتمام تسجيل الدخول عبر Google.');
       }
     } finally {
+      popupInFlightRef.current = false;
       setSigningIn(false);
     }
   };

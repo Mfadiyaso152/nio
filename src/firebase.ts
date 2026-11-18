@@ -99,30 +99,47 @@ export async function verifyAdminOnServer(user: User | null): Promise<{
   error?: string;
 }> {
   if (!user) {
-    return { authorized: false, error: 'Not signed in' };
+    return { authorized: false, error: 'لم يتم تسجيل الدخول.' };
   }
   try {
-    const idToken = await user.getIdToken();
+    const idToken = await user.getIdToken(true);
     const res = await fetch('/api/auth/verify-admin', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${idToken}`,
       },
     });
-    const data = (await res.json()) as {
+    const rawText = await res.text();
+    let data: {
       authorized?: boolean;
       email?: string | null;
       error?: string;
-    };
+    } = {};
+    try {
+      data = rawText ? (JSON.parse(rawText) as typeof data) : {};
+    } catch {
+      console.error('Non-JSON verify-admin response:', res.status, rawText.slice(0, 200));
+      return {
+        authorized: false,
+        email: user.email,
+        error: `تعذر التحقق على الخادم (HTTP ${res.status}).`,
+      };
+    }
+
     if (!res.ok || !data.authorized) {
       return {
         authorized: false,
         email: data.email || user.email,
-        error: data.error || 'Unauthorized',
+        error: data.error || `غير مصرح (${res.status})`,
       };
     }
     return { authorized: true, email: data.email || user.email };
-  } catch {
-    return { authorized: false, email: user.email, error: 'Server verification failed' };
+  } catch (err) {
+    console.error('verifyAdminOnServer network error:', err);
+    return {
+      authorized: false,
+      email: user.email,
+      error: 'تعذر الاتصال بخادم التحقق، يرجى المحاولة مجدداً.',
+    };
   }
 }
