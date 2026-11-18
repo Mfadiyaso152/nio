@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import {
-  ADMIN_EMAIL,
   auth,
   isAuthorizedAdminUser,
   signInWithGoogleAdmin,
@@ -26,7 +25,7 @@ export function LoginPage() {
 
       if (!isAuthorizedAdminUser(user)) {
         await signOutAdmin();
-        setErrorMsg(`الحساب (${user.email}) غير مصرح له بالدخول لإدارة نيو.`);
+        setErrorMsg('هذا الحساب غير مصرح له بالدخول لإدارة نيو.');
         setLoading(false);
         return;
       }
@@ -51,9 +50,7 @@ export function LoginPage() {
       const result = await signInWithGoogleAdmin();
       if (!isAuthorizedAdminUser(result.user)) {
         await signOutAdmin();
-        setErrorMsg(
-          `الدخول حصري لحساب الإدارة المعتمد (${ADMIN_EMAIL}) فقط.`
-        );
+        setErrorMsg('الدخول حصري لحساب الإدارة المعتمد فقط.');
         return;
       }
       const verified = await verifyAdminOnServer(result.user);
@@ -63,8 +60,18 @@ export function LoginPage() {
         return;
       }
       navigate('/admin', { replace: true });
-    } catch {
-      setErrorMsg('تعذر إتمام تسجيل الدخول عبر Google.');
+    } catch (err) {
+      const code =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? String((err as { code?: unknown }).code)
+          : '';
+      if (code === 'auth/unauthorized-domain') {
+        setErrorMsg(
+          'هذا الدومين غير مضاف في النطاقات الموثوقة (Authorized domains) داخل Firebase Authentication.'
+        );
+      } else {
+        setErrorMsg('تعذر إتمام تسجيل الدخول عبر Google.');
+      }
     } finally {
       setSigningIn(false);
     }
@@ -129,10 +136,6 @@ export function LoginPage() {
           )}
           <span>المتابعة بحساب Google</span>
         </button>
-
-        <p className="text-[11px] text-[#6B6B76] font-mono-tabular" dir="ltr">
-          {ADMIN_EMAIL}
-        </p>
       </div>
     </div>
   );
