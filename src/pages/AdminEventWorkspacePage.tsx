@@ -63,6 +63,7 @@ import {
   generateInviteToken,
   generateQrToken,
   generateRandomToken,
+  PUBLIC_SITE_URL,
   renderInvitationPassPng,
 } from '../utils/themePresets';
 import { InvitationCardRenderer } from '../components/InvitationCardRenderer';
@@ -532,7 +533,7 @@ export function AdminEventWorkspacePage() {
     );
   }
 
-  const shareReportUrl = `${window.location.origin}/report/${eventDoc.shareToken}`;
+  const shareReportUrl = `${PUBLIC_SITE_URL}/report/${eventDoc.shareToken}`;
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#F7F7F9] text-[#34343D]">
@@ -706,7 +707,7 @@ export function AdminEventWorkspacePage() {
               ) : (
                 <div className="divide-y divide-[#E4E4EA]">
                   {mergedGuests.map((inv) => {
-                    const inviteUrl = `${window.location.origin}/invite/${inv.inviteToken}`;
+                    const inviteUrl = `${PUBLIC_SITE_URL}/invite/${inv.inviteToken}`;
                     const guestDisplay = [inv.guestTitle, inv.guestName]
                       .filter(Boolean)
                       .join(' ');

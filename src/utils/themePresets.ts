@@ -18,6 +18,9 @@ export const NIO_COLORS = {
 
 export const NIO_WHATSAPP_NUMBER = '966536894854';
 export const NIO_WHATSAPP_DISPLAY = '0536894854';
+export const PUBLIC_SITE_URL = (
+  import.meta.env.VITE_PUBLIC_SITE_URL || 'https://nio-wmgr.vercel.app'
+).replace(/\/+$/, '');
 
 export function buildWhatsAppOrderUrl(message?: string): string {
   const text =

@@ -1,21 +1,21 @@
-# دليل التشغيل والنشر — منصة وِصال | WISAL
+# دليل التشغيل والنشر — منصة نيو | NIO
 
-## 1. المتطلبات الأساسية
-- Node.js 20+
-- مشروع Firebase مُهيأ (`firebase-applet-config.json`) مع تفعيل:
-  - **Authentication**: مزود Google Sign-In
-  - **Cloud Firestore**: قاعدة البيانات السحابية + نشر ملف `firestore.rules`
+## 1. الدومين الرسمي
+- الرابط العام للمنصة: `https://nio-wmgr.vercel.app/`
 
-## 2. متغيرات البيئة (`.env`)
-انسخ ملف `.env.example` إلى `.env`:
-- `APP_URL`: الرابط العام للمنصة.
-- **تكامل Apple Wallet** (اختياري): `APPLE_PASS_TYPE_ID`, `APPLE_TEAM_ID`, `APPLE_WALLET_CERT_PEM`, `APPLE_WALLET_KEY_PEM`, `APPLE_WALLET_WWDR_PEM`.
-- **تكامل Google Wallet** (اختياري): `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_SA_JSON`.
-- **تكامل Samsung Wallet** (اختياري): `SAMSUNG_WALLET_PARTNER_ID`, `SAMSUNG_WALLET_CARD_ID`, `SAMSUNG_WALLET_PRIVATE_KEY`.
+## 2. المتطلبات الأساسية وإعداد Firebase
+- مشروع Firebase مُهيأ (`firebase-applet-config.json` — `citric-phenomenon-f7854`):
+  - **Authentication**: تفعيل مزود **Google Sign-In**.
+  - **Authorized Domains**: تأكد من إضافة الدومين `nio-wmgr.vercel.app` ضمن **Firebase Console → Authentication → Settings → Authorized domains** ليعمل تسجيل دخول المسؤول (`mfb.15.f@gmail.com`) على Vercel بدون حظر.
+  - **Cloud Firestore**: قاعدة البيانات `ai-studio-51c97bbf-2ce7-4994-9043-5c542e89200e` + نشر ملف `firestore.rules`.
 
-> ملاحظة: أزرار المحافظ الرقمية في صفحة تذكرة المدعو تُعرض تلقائياً فقط عند توفر شهادات ومفاتيح التكامل الرسمية على الخادم.
+## 3. النشر على Vercel
+- ملف `vercel.json` مضبوط لإعادة توجيه جميع مسارات التطبيق (`/admin`, `/login`, `/admin/event/*`, `/invite/*`, `/report/*`) إلى `index.html` مع دعم دوال `/api/*` داخل مجلد `/api`.
+- متغيرات البيئة الاختيارية في Vercel:
+  - `VITE_PUBLIC_SITE_URL=https://nio-wmgr.vercel.app`
+  - متغيرات **Apple Wallet** (`.pkpass` عند توفر شهادات Apple Developer): `APPLE_PASS_TYPE_ID`, `APPLE_TEAM_ID`, `APPLE_WALLET_CERT_PEM`, `APPLE_WALLET_KEY_PEM`, `APPLE_WALLET_WWDR_PEM`.
 
-## 3. التشغيل المحلي والإنتاج
+## 4. التشغيل المحلي
 ```bash
 npm install
 npm run dev      # التشغيل التطويري على المنفذ 3000
@@ -23,9 +23,3 @@ npm run lint     # فحص TypeScript
 npm run build    # بناء حزمة الإنتاج
 npm start        # تشغيل الإنتاج عبر server.ts
 ```
-
-## 4. الأمان وصلاحيات الإدارة
-- الدخول إلى لوحة التحكم، إنشاء المناسبات، استعراض قوائم المدعوين، التقارير، ومسح التذاكر عند البوابة محصور بالكامل لحساب Google المعتمد (`mfb.15.f@gmail.com`) عبر:
-  1. التحقق من توقيع رمز الجلسة (`Firebase ID Token`) على الخادم (`/api/auth/verify-admin`).
-  2. قواعد أمان Firestore في `firestore.rules`.
-- تأكيد حضور الضيف ومكافحة التكرار عند البوابة منفذان عبر `runTransaction` الذرية داخل Firestore لضمان عدم مرور تذكرة واحدة من جهازين في الوقت نفسه.
