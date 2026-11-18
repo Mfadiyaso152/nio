@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-ruqaa {
+    font-family: 'Aref Ruqaa', 'Amiri', serif;
+  }
+
+  .font-amiri {
+    font-family: 'Amiri', Georgia, serif;
+  }
+
+  .font-cairo {
+    font-family: 'Cairo', system-ui, sans-serif;
+  }
+
+  .font-tajawal {
+    font-family: 'Tajawal', system-ui, sans-serif;
+  }
+
+  .font-kufi {
+    font-family: 'Reem Kufi', 'Cairo', sans-serif;
+  }
+
+  .font-naskh {
+    font-family: 'Scheherazade New', 'Amiri', serif;
+  }
+
+  .font-mono-tabular {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

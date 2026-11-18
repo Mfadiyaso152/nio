@@ -1,0 +1,257 @@
+{
+  "entities": {
+    "CanvasTextLayer": {
+      "title": "CanvasTextLayer",
+      "description": "Freeform text layer placed on top of the custom event background.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 40 },
+        "text": { "type": "string", "maxLength": 300 },
+        "fontFamily": {
+          "type": "string",
+          "enum": ["aref-ruqaa", "amiri", "cairo", "tajawal", "reem-kufi", "scheherazade"],
+          "maxLength": 24
+        },
+        "fontSize": { "type": "integer" },
+        "color": { "type": "string", "maxLength": 20, "pattern": "^#[0-9a-fA-F]{6}$" },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "bold": { "type": "boolean" }
+      },
+      "required": ["id", "text", "fontFamily", "fontSize", "color", "x", "y", "bold"]
+    },
+    "CanvasPngLayer": {
+      "title": "CanvasPngLayer",
+      "description": "Uploaded PNG sticker or decorative overlay placed on the custom invitation canvas.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 40 },
+        "src": { "type": "string", "maxLength": 300000 },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "widthPct": { "type": "number" },
+        "opacity": { "type": "number" }
+      },
+      "required": ["id", "src", "x", "y", "widthPct", "opacity"]
+    },
+    "EventCanvasDesign": {
+      "title": "EventCanvasDesign",
+      "description": "Freeform invitation canvas design with custom background image, text layers, and PNG overlays.",
+      "type": "object",
+      "properties": {
+        "backgroundImage": { "type": "string", "maxLength": 450000 },
+        "backgroundColor": { "type": "string", "maxLength": 20, "pattern": "^#[0-9a-fA-F]{6}$" },
+        "accentColor": { "type": "string", "maxLength": 20, "pattern": "^#[0-9a-fA-F]{6}$" },
+        "textColor": { "type": "string", "maxLength": 20, "pattern": "^#[0-9a-fA-F]{6}$" },
+        "fontFamily": {
+          "type": "string",
+          "enum": ["aref-ruqaa", "amiri", "cairo", "tajawal", "reem-kufi", "scheherazade"],
+          "maxLength": 24
+        },
+        "textLayers": {
+          "type": "array",
+          "$ref": "#/entities/CanvasTextLayer"
+        },
+        "pngLayers": {
+          "type": "array",
+          "$ref": "#/entities/CanvasPngLayer"
+        }
+      },
+      "required": [
+        "backgroundImage",
+        "backgroundColor",
+        "accentColor",
+        "textColor",
+        "fontFamily",
+        "textLayers",
+        "pngLayers"
+      ]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "An event managed by NIO with its own unique slug URL, shareToken for host statistics, and freeform canvas design.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "minLength": 2, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "shareToken": { "type": "string", "minLength": 16, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "subtitle": { "type": "string", "maxLength": 180 },
+        "eventType": { "type": "string", "enum": ["wedding", "engagement", "graduation", "reception", "private"], "maxLength": 24 },
+        "hostNames": { "type": "string", "maxLength": 120 },
+        "dateText": { "type": "string", "maxLength": 80 },
+        "timeText": { "type": "string", "maxLength": 60 },
+        "venueName": { "type": "string", "maxLength": 120 },
+        "city": { "type": "string", "maxLength": 60 },
+        "mapUrl": { "type": "string", "maxLength": 300 },
+        "welcomeMessage": { "type": "string", "maxLength": 600 },
+        "isActive": { "type": "boolean" },
+        "canvasDesign": { "type": "object", "$ref": "#/entities/EventCanvasDesign" },
+        "ownerEmail": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "slug",
+        "shareToken",
+        "title",
+        "subtitle",
+        "eventType",
+        "hostNames",
+        "dateText",
+        "timeText",
+        "venueName",
+        "city",
+        "mapUrl",
+        "welcomeMessage",
+        "isActive",
+        "canvasDesign",
+        "ownerEmail",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Invitation": {
+      "title": "Invitation",
+      "description": "Single-guest invitation keyed by secret inviteToken with independent qrToken.",
+      "type": "object",
+      "properties": {
+        "inviteToken": { "type": "string", "minLength": 12, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "qrToken": { "type": "string", "minLength": 8, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventSlug": { "type": "string", "minLength": 2, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "shareToken": { "type": "string", "minLength": 16, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "guestName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "guestTitle": { "type": "string", "maxLength": 60 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "groupName": { "type": "string", "maxLength": 60 },
+        "maxCompanions": { "type": "integer" },
+        "attendingCount": { "type": "integer" },
+        "rsvpStatus": { "type": "string", "enum": ["pending", "confirmed", "declined"], "maxLength": 20 },
+        "guestNote": { "type": "string", "maxLength": 300 },
+        "checkedIn": { "type": "boolean" },
+        "checkedInAt": { "type": "string", "format": "date-time" },
+        "duplicateAttempts": { "type": "integer" },
+        "lastDuplicateAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "inviteToken",
+        "qrToken",
+        "eventSlug",
+        "shareToken",
+        "guestName",
+        "guestTitle",
+        "phone",
+        "groupName",
+        "maxCompanions",
+        "attendingCount",
+        "rsvpStatus",
+        "guestNote",
+        "checkedIn",
+        "duplicateAttempts",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "QrTicket": {
+      "title": "QrTicket",
+      "description": "Independent QR ticket lookup keyed by opaque qrToken for atomic check-in and duplicate detection.",
+      "type": "object",
+      "properties": {
+        "qrToken": { "type": "string", "minLength": 8, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "inviteToken": { "type": "string", "minLength": 12, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventSlug": { "type": "string", "minLength": 2, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "shareToken": { "type": "string", "minLength": 16, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "guestDisplay": { "type": "string", "maxLength": 140 },
+        "attendingCount": { "type": "integer" },
+        "rsvpStatus": { "type": "string", "enum": ["pending", "confirmed", "declined"], "maxLength": 20 },
+        "checkedIn": { "type": "boolean" },
+        "checkedInAt": { "type": "string", "format": "date-time" },
+        "duplicateAttempts": { "type": "integer" },
+        "lastDuplicateAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "qrToken",
+        "inviteToken",
+        "eventSlug",
+        "shareToken",
+        "guestDisplay",
+        "attendingCount",
+        "rsvpStatus",
+        "checkedIn",
+        "duplicateAttempts",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SharedReportMeta": {
+      "title": "SharedReportMeta",
+      "description": "Public read-only event stats header keyed by unguessable shareToken.",
+      "type": "object",
+      "properties": {
+        "shareToken": { "type": "string", "minLength": 16, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventSlug": { "type": "string", "minLength": 2, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventTitle": { "type": "string", "maxLength": 120 },
+        "dateText": { "type": "string", "maxLength": 80 },
+        "venueName": { "type": "string", "maxLength": 120 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["shareToken", "eventSlug", "eventTitle", "dateText", "venueName", "updatedAt"]
+    },
+    "SharedReportEntry": {
+      "title": "SharedReportEntry",
+      "description": "Live attendance entry inside a shared host report.",
+      "type": "object",
+      "properties": {
+        "qrToken": { "type": "string", "minLength": 8, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "shareToken": { "type": "string", "minLength": 16, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "guestDisplay": { "type": "string", "maxLength": 140 },
+        "groupName": { "type": "string", "maxLength": 60 },
+        "maxCompanions": { "type": "integer" },
+        "attendingCount": { "type": "integer" },
+        "rsvpStatus": { "type": "string", "enum": ["pending", "confirmed", "declined"], "maxLength": 20 },
+        "checkedIn": { "type": "boolean" },
+        "checkedInAt": { "type": "string", "format": "date-time" },
+        "duplicateAttempts": { "type": "integer" },
+        "lastDuplicateAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "qrToken",
+        "shareToken",
+        "guestDisplay",
+        "groupName",
+        "maxCompanions",
+        "attendingCount",
+        "rsvpStatus",
+        "checkedIn",
+        "duplicateAttempts",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/events/{eventSlug}": {
+      "schema": { "$ref": "#/entities/Event" },
+      "description": "Events keyed by URL-safe event slug."
+    },
+    "/invitations/{inviteToken}": {
+      "schema": { "$ref": "#/entities/Invitation" },
+      "description": "Guest invitations keyed by secret inviteToken."
+    },
+    "/qrTickets/{qrToken}": {
+      "schema": { "$ref": "#/entities/QrTicket" },
+      "description": "Independent QR tickets keyed by qrToken."
+    },
+    "/sharedReports/{shareToken}": {
+      "schema": { "$ref": "#/entities/SharedReportMeta" },
+      "description": "Read-only host statistics header keyed by unguessable shareToken."
+    },
+    "/sharedReports/{shareToken}/entries/{qrToken}": {
+      "schema": { "$ref": "#/entities/SharedReportEntry" },
+      "description": "Guest attendance entries visible to the event host via secret shareToken."
+    }
+  }
+}

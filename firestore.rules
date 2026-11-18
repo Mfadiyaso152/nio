@@ -1,0 +1,388 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 2 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'mfb.15.f@gmail.com';
+    }
+
+    function isHexColor(val) {
+      return val is string && val.size() == 7 && val.matches('^#[0-9a-fA-F]{6}$');
+    }
+
+    function isValidFont(f) {
+      return f is string && f in ['aref-ruqaa', 'amiri', 'cairo', 'tajawal', 'reem-kufi', 'scheherazade'];
+    }
+
+    function isValidTextLayer(layer) {
+      return layer is map
+        && layer.keys().hasAll(['id', 'text', 'fontFamily', 'fontSize', 'color', 'x', 'y', 'bold'])
+        && layer.keys().hasOnly(['id', 'text', 'fontFamily', 'fontSize', 'color', 'x', 'y', 'bold'])
+        && layer.id is string && layer.id.size() >= 1 && layer.id.size() <= 40
+        && layer.text is string && layer.text.size() <= 300
+        && isValidFont(layer.fontFamily)
+        && layer.fontSize is int && layer.fontSize >= 10 && layer.fontSize <= 120
+        && isHexColor(layer.color)
+        && layer.x is number && layer.x >= 0 && layer.x <= 100
+        && layer.y is number && layer.y >= 0 && layer.y <= 100
+        && layer.bold is bool;
+    }
+
+    function isValidPngLayer(layer) {
+      return layer is map
+        && layer.keys().hasAll(['id', 'src', 'x', 'y', 'widthPct', 'opacity'])
+        && layer.keys().hasOnly(['id', 'src', 'x', 'y', 'widthPct', 'opacity'])
+        && layer.id is string && layer.id.size() >= 1 && layer.id.size() <= 40
+        && layer.src is string && layer.src.size() <= 300000
+        && layer.x is number && layer.x >= 0 && layer.x <= 100
+        && layer.y is number && layer.y >= 0 && layer.y <= 100
+        && layer.widthPct is number && layer.widthPct >= 4 && layer.widthPct <= 100
+        && layer.opacity is number && layer.opacity >= 0.05 && layer.opacity <= 1;
+    }
+
+    function isValidCanvasDesign(d) {
+      return d is map
+        && d.keys().hasAll([
+          'backgroundImage', 'backgroundColor', 'accentColor', 'textColor',
+          'fontFamily', 'textLayers', 'pngLayers'
+        ])
+        && d.keys().hasOnly([
+          'backgroundImage', 'backgroundColor', 'accentColor', 'textColor',
+          'fontFamily', 'textLayers', 'pngLayers'
+        ])
+        && d.backgroundImage is string && d.backgroundImage.size() <= 450000
+        && isHexColor(d.backgroundColor)
+        && isHexColor(d.accentColor)
+        && isHexColor(d.textColor)
+        && isValidFont(d.fontFamily)
+        && d.textLayers is list && d.textLayers.size() <= 20
+        && (d.textLayers.size() == 0 || isValidTextLayer(d.textLayers[0]))
+        && d.pngLayers is list && d.pngLayers.size() <= 10
+        && (d.pngLayers.size() == 0 || isValidPngLayer(d.pngLayers[0]));
+    }
+
+    function isValidEvent(data, eventSlug) {
+      return data.keys().hasAll([
+          'slug', 'shareToken', 'title', 'subtitle', 'eventType', 'hostNames', 'dateText',
+          'timeText', 'venueName', 'city', 'mapUrl', 'welcomeMessage',
+          'isActive', 'canvasDesign', 'ownerEmail', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'slug', 'shareToken', 'title', 'subtitle', 'eventType', 'hostNames', 'dateText',
+          'timeText', 'venueName', 'city', 'mapUrl', 'welcomeMessage',
+          'isActive', 'canvasDesign', 'ownerEmail', 'createdAt', 'updatedAt'
+        ])
+        && data.slug == eventSlug
+        && isValidId(data.slug)
+        && isValidId(data.shareToken) && data.shareToken.size() >= 16
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 120
+        && data.subtitle is string && data.subtitle.size() <= 180
+        && data.eventType is string && data.eventType in ['wedding', 'engagement', 'graduation', 'reception', 'private']
+        && data.hostNames is string && data.hostNames.size() <= 120
+        && data.dateText is string && data.dateText.size() <= 80
+        && data.timeText is string && data.timeText.size() <= 60
+        && data.venueName is string && data.venueName.size() <= 120
+        && data.city is string && data.city.size() <= 60
+        && data.mapUrl is string && data.mapUrl.size() <= 300
+        && data.welcomeMessage is string && data.welcomeMessage.size() <= 600
+        && data.isActive is bool
+        && isValidCanvasDesign(data.canvasDesign)
+        && data.ownerEmail == 'mfb.15.f@gmail.com'
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInvitation(data, inviteToken) {
+      return data.keys().hasAll([
+          'inviteToken', 'qrToken', 'eventSlug', 'shareToken', 'guestName', 'guestTitle', 'phone',
+          'groupName', 'maxCompanions', 'attendingCount',
+          'rsvpStatus', 'guestNote', 'checkedIn', 'duplicateAttempts', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'inviteToken', 'qrToken', 'eventSlug', 'shareToken', 'guestName', 'guestTitle', 'phone',
+          'groupName', 'maxCompanions', 'attendingCount',
+          'rsvpStatus', 'guestNote', 'checkedIn', 'checkedInAt', 'duplicateAttempts', 'lastDuplicateAt',
+          'rsvpAt', 'createdAt', 'updatedAt'
+        ])
+        && data.inviteToken == inviteToken
+        && isValidId(data.inviteToken) && data.inviteToken.size() >= 12
+        && isValidId(data.qrToken) && data.qrToken.size() >= 8
+        && isValidId(data.eventSlug)
+        && isValidId(data.shareToken) && data.shareToken.size() >= 16
+        && data.guestName is string && data.guestName.size() >= 1 && data.guestName.size() <= 120
+        && data.guestTitle is string && data.guestTitle.size() <= 60
+        && data.phone is string && data.phone.size() <= 30
+        && data.groupName is string && data.groupName.size() <= 60
+        && data.maxCompanions is int && data.maxCompanions >= 1 && data.maxCompanions <= 20
+        && data.attendingCount is int && data.attendingCount >= 0 && data.attendingCount <= data.maxCompanions
+        && data.rsvpStatus is string && data.rsvpStatus in ['pending', 'confirmed', 'declined']
+        && data.guestNote is string && data.guestNote.size() <= 300
+        && data.checkedIn is bool
+        && (!('checkedInAt' in data) || data.checkedInAt == null || data.checkedInAt is timestamp)
+        && data.duplicateAttempts is int && data.duplicateAttempts >= 0
+        && (!('lastDuplicateAt' in data) || data.lastDuplicateAt == null || data.lastDuplicateAt is timestamp)
+        && (!('rsvpAt' in data) || data.rsvpAt == null || data.rsvpAt is timestamp)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidQrTicket(data, qrToken) {
+      return data.keys().hasAll([
+          'qrToken', 'inviteToken', 'eventSlug', 'shareToken', 'guestDisplay',
+          'attendingCount', 'rsvpStatus', 'checkedIn', 'duplicateAttempts', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'qrToken', 'inviteToken', 'eventSlug', 'shareToken', 'guestDisplay',
+          'attendingCount', 'rsvpStatus', 'checkedIn', 'checkedInAt', 'duplicateAttempts', 'lastDuplicateAt',
+          'createdAt', 'updatedAt'
+        ])
+        && data.qrToken == qrToken
+        && isValidId(data.qrToken) && data.qrToken.size() >= 8
+        && isValidId(data.inviteToken) && data.inviteToken.size() >= 12
+        && isValidId(data.eventSlug)
+        && isValidId(data.shareToken) && data.shareToken.size() >= 16
+        && data.guestDisplay is string && data.guestDisplay.size() >= 1 && data.guestDisplay.size() <= 140
+        && data.attendingCount is int && data.attendingCount >= 0 && data.attendingCount <= 20
+        && data.rsvpStatus is string && data.rsvpStatus in ['pending', 'confirmed', 'declined']
+        && data.checkedIn is bool
+        && (!('checkedInAt' in data) || data.checkedInAt == null || data.checkedInAt is timestamp)
+        && data.duplicateAttempts is int && data.duplicateAttempts >= 0
+        && (!('lastDuplicateAt' in data) || data.lastDuplicateAt == null || data.lastDuplicateAt is timestamp)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSharedReportMeta(data, shareToken) {
+      return data.keys().hasAll(['shareToken', 'eventSlug', 'eventTitle', 'dateText', 'venueName', 'updatedAt'])
+        && data.keys().hasOnly(['shareToken', 'eventSlug', 'eventTitle', 'dateText', 'venueName', 'updatedAt'])
+        && data.shareToken == shareToken
+        && isValidId(data.shareToken) && data.shareToken.size() >= 16
+        && isValidId(data.eventSlug)
+        && data.eventTitle is string && data.eventTitle.size() >= 2 && data.eventTitle.size() <= 120
+        && data.dateText is string && data.dateText.size() <= 80
+        && data.venueName is string && data.venueName.size() <= 120
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSharedReportEntry(data, shareToken, qrToken) {
+      return data.keys().hasAll([
+          'qrToken', 'shareToken', 'guestDisplay', 'groupName', 'maxCompanions',
+          'attendingCount', 'rsvpStatus', 'checkedIn', 'duplicateAttempts', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'qrToken', 'shareToken', 'guestDisplay', 'groupName', 'maxCompanions',
+          'attendingCount', 'rsvpStatus', 'checkedIn', 'checkedInAt', 'duplicateAttempts', 'lastDuplicateAt',
+          'updatedAt'
+        ])
+        && data.qrToken == qrToken
+        && isValidId(data.qrToken) && data.qrToken.size() >= 8
+        && data.shareToken == shareToken
+        && isValidId(data.shareToken) && data.shareToken.size() >= 16
+        && data.guestDisplay is string && data.guestDisplay.size() >= 1 && data.guestDisplay.size() <= 140
+        && data.groupName is string && data.groupName.size() <= 60
+        && data.maxCompanions is int && data.maxCompanions >= 1 && data.maxCompanions <= 20
+        && data.attendingCount is int && data.attendingCount >= 0 && data.attendingCount <= data.maxCompanions
+        && data.rsvpStatus is string && data.rsvpStatus in ['pending', 'confirmed', 'declined']
+        && data.checkedIn is bool
+        && (!('checkedInAt' in data) || data.checkedInAt == null || data.checkedInAt is timestamp)
+        && data.duplicateAttempts is int && data.duplicateAttempts >= 0
+        && (!('lastDuplicateAt' in data) || data.lastDuplicateAt == null || data.lastDuplicateAt is timestamp)
+        && data.updatedAt is timestamp;
+    }
+
+    // Events Collection
+    match /events/{eventSlug} {
+      allow get: if isValidId(eventSlug);
+      allow list: if isAdmin();
+
+      allow create: if isAdmin()
+        && isValidId(eventSlug)
+        && isValidEvent(incoming(), eventSlug)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isAdmin()
+        && isValidId(eventSlug)
+        && isValidEvent(incoming(), eventSlug)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+
+      allow delete: if isAdmin() && isValidId(eventSlug);
+    }
+
+    // Single-Guest Invitations
+    match /invitations/{inviteToken} {
+      allow get: if isValidId(inviteToken) && inviteToken.size() >= 12;
+      allow list: if isAdmin();
+
+      allow create: if isAdmin()
+        && isValidId(inviteToken)
+        && isValidInvitation(incoming(), inviteToken)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/events/$(incoming().eventSlug));
+
+      allow update: if isValidId(inviteToken)
+        && isValidInvitation(incoming(), inviteToken)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().inviteToken == existing().inviteToken
+        && incoming().qrToken == existing().qrToken
+        && incoming().eventSlug == existing().eventSlug
+        && incoming().shareToken == existing().shareToken
+        && (
+          isAdmin()
+          ||
+          (
+            existing().checkedIn == false
+            && incoming().diff(existing()).affectedKeys().hasOnly(['rsvpStatus', 'attendingCount', 'guestNote', 'rsvpAt', 'updatedAt'])
+            && incoming().rsvpStatus in ['confirmed', 'declined']
+            && (
+              (incoming().rsvpStatus == 'declined' && incoming().attendingCount == 0)
+              || (incoming().rsvpStatus == 'confirmed' && incoming().attendingCount >= 1 && incoming().attendingCount <= existing().maxCompanions)
+            )
+            && incoming().rsvpAt == request.time
+          )
+        );
+
+      allow delete: if isAdmin() && isValidId(inviteToken);
+    }
+
+    // Independent Opaque QR Tickets (Atomic Gate Verification)
+    match /qrTickets/{qrToken} {
+      allow get: if isValidId(qrToken) && qrToken.size() >= 8;
+      allow list: if isAdmin();
+
+      allow create: if isAdmin()
+        && isValidId(qrToken)
+        && isValidQrTicket(incoming(), qrToken)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(qrToken)
+        && isValidQrTicket(incoming(), qrToken)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().qrToken == existing().qrToken
+        && incoming().inviteToken == existing().inviteToken
+        && incoming().eventSlug == existing().eventSlug
+        && incoming().shareToken == existing().shareToken
+        && (
+          isAdmin()
+          ||
+          (
+            existing().checkedIn == false
+            && incoming().checkedIn == true
+            && incoming().checkedInAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['checkedIn', 'checkedInAt', 'updatedAt'])
+          )
+          ||
+          (
+            existing().checkedIn == true
+            && incoming().checkedIn == true
+            && incoming().duplicateAttempts == existing().duplicateAttempts + 1
+            && incoming().lastDuplicateAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['duplicateAttempts', 'lastDuplicateAt', 'updatedAt'])
+          )
+          ||
+          (
+            existing().checkedIn == false
+            && incoming().diff(existing()).affectedKeys().hasOnly(['rsvpStatus', 'attendingCount', 'updatedAt'])
+            && incoming().rsvpStatus in ['confirmed', 'declined']
+          )
+        );
+
+      allow delete: if isAdmin() && isValidId(qrToken);
+    }
+
+    // Shared Host Report Metadata & Live Entries
+    match /sharedReports/{shareToken} {
+      allow get: if isValidId(shareToken) && shareToken.size() >= 16;
+      allow list: if isAdmin();
+
+      allow create: if isAdmin()
+        && isValidId(shareToken)
+        && isValidSharedReportMeta(incoming(), shareToken)
+        && incoming().updatedAt == request.time;
+
+      allow update: if isAdmin()
+        && isValidId(shareToken)
+        && isValidSharedReportMeta(incoming(), shareToken)
+        && incoming().updatedAt == request.time;
+
+      allow delete: if isAdmin() && isValidId(shareToken);
+
+      match /entries/{qrToken} {
+        allow get: if isAdmin() || (isValidId(shareToken) && shareToken.size() >= 16 && isValidId(qrToken) && qrToken.size() >= 8);
+        allow list: if isAdmin() || (isValidId(shareToken) && shareToken.size() >= 16 && resource.data.shareToken == shareToken);
+
+        allow create: if isAdmin()
+          && isValidId(shareToken)
+          && isValidId(qrToken)
+          && isValidSharedReportEntry(incoming(), shareToken, qrToken)
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidId(shareToken)
+          && isValidId(qrToken)
+          && isValidSharedReportEntry(incoming(), shareToken, qrToken)
+          && incoming().updatedAt == request.time
+          && incoming().qrToken == existing().qrToken
+          && incoming().shareToken == existing().shareToken
+          && (
+            isAdmin()
+            ||
+            (
+              existing().checkedIn == false
+              && incoming().checkedIn == true
+              && incoming().checkedInAt == request.time
+              && incoming().diff(existing()).affectedKeys().hasOnly(['checkedIn', 'checkedInAt', 'updatedAt'])
+            )
+            ||
+            (
+              existing().checkedIn == true
+              && incoming().checkedIn == true
+              && incoming().duplicateAttempts == existing().duplicateAttempts + 1
+              && incoming().lastDuplicateAt == request.time
+              && incoming().diff(existing()).affectedKeys().hasOnly(['duplicateAttempts', 'lastDuplicateAt', 'updatedAt'])
+            )
+            ||
+            (
+              existing().checkedIn == false
+              && incoming().diff(existing()).affectedKeys().hasOnly(['rsvpStatus', 'attendingCount', 'updatedAt'])
+              && incoming().rsvpStatus in ['confirmed', 'declined']
+              && (
+                (incoming().rsvpStatus == 'declined' && incoming().attendingCount == 0)
+                || (incoming().rsvpStatus == 'confirmed' && incoming().attendingCount >= 1 && incoming().attendingCount <= existing().maxCompanions)
+              )
+            )
+          );
+
+        allow delete: if isAdmin() && isValidId(shareToken) && isValidId(qrToken);
+      }
+    }
+  }
+}

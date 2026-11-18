@@ -1,0 +1,6 @@
+{
+  "name": "نيو | NIO — منصة دعوات الحفلات والأعراس",
+  "description": "منصة نيو (NIO) لإدارة الحفلات والأعراس، تصميم الدعوات المخصصة، توليد روابط الدعوات وتذاكر Apple Wallet، ومسح الباركود عند الدخول.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
